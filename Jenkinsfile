@@ -1,8 +1,17 @@
 pipeline {
+
     agent any
 
-    environment {
-        TERRAFORM_WORKSPACE = 'dev'
+    parameters {
+        choice(
+            name: 'TERRAFORM_WORKSPACE',
+            choices: [
+                'dev',
+                'stg',
+                'prod'
+            ],
+            description: 'Select the Terraform workspace'
+        )
     }
 
     stages {
@@ -27,23 +36,28 @@ pipeline {
                     terraform workspace select ${TERRAFORM_WORKSPACE} || \
                     terraform workspace new ${TERRAFORM_WORKSPACE}
 
+                    echo "Selected workspace:"
                     terraform workspace show
                 '''
             }
         }
 
-        stage('Terraform Apply Approval') {
+        stage('Terraform Plan') {
             steps {
-                script {
+                sh '''
+                    terraform plan -out=tfplan
+                '''
+            }
+        }
 
-                    timeout(time: 5, unit: 'MINUTES') {
+        stage('Manual Approval') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
 
-                        input(
-                            message: 'Do you want to apply Terraform changes?',
-                            ok: 'Proceed',
-                            submitterParameter: 'APPROVED_BY'
-                        )
-                    }
+                    input(
+                        message: "Apply Terraform changes to ${TERRAFORM_WORKSPACE}?",
+                        ok: 'Proceed'
+                    )
                 }
             }
         }
@@ -51,7 +65,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 sh '''
-                    terraform apply -auto-approve
+                    terraform apply -auto-approve tfplan
                 '''
             }
         }
@@ -60,11 +74,16 @@ pipeline {
     post {
 
         success {
-            echo "===================================="
-            echo "Terraform deployment SUCCESSFUL"
-            echo "Build Number: ${BUILD_NUMBER}"
-            echo "Jenkins URL: ${BUILD_URL}"
-            echo "===================================="
+            echo """
+========================================
+TERRAFORM DEPLOYMENT SUCCESSFUL
+========================================
+Project: ${JOB_NAME}
+Build Number: ${BUILD_NUMBER}
+Workspace: ${TERRAFORM_WORKSPACE}
+Build URL: ${BUILD_URL}
+========================================
+"""
         }
 
         failure {
@@ -81,7 +100,7 @@ pipeline {
                     body: """
 Hello,
 
-The Jenkins Terraform pipeline has FAILED.
+The Terraform Jenkins pipeline has FAILED.
 
 Project:
 ${JOB_NAME}
@@ -89,24 +108,24 @@ ${JOB_NAME}
 Build Number:
 ${BUILD_NUMBER}
 
+Workspace:
+${TERRAFORM_WORKSPACE}
+
+Jenkins Project:
+${JOB_URL}
+
 Build URL:
 ${BUILD_URL}
 
-Jenkins Project URL:
-${JOB_URL}
-
-Terraform Workspace:
-${TERRAFORM_WORKSPACE}
-
-Terraform Output:
-----------------------------
-${terraformOutput}
-----------------------------
-
-Please check the Jenkins console log for the complete error.
-
 Console Output:
 ${BUILD_URL}console
+
+Terraform Output:
+--------------------------------
+${terraformOutput}
+--------------------------------
+
+Please check Jenkins Console Output for the complete error.
 
 Regards,
 Jenkins
@@ -118,10 +137,15 @@ Jenkins
         }
 
         aborted {
-            echo "===================================="
-            echo "Pipeline was ABORTED"
-            echo "Build Number: ${BUILD_NUMBER}"
-            echo "===================================="
+            echo """
+========================================
+PIPELINE ABORTED
+========================================
+Project: ${JOB_NAME}
+Build Number: ${BUILD_NUMBER}
+Workspace: ${TERRAFORM_WORKSPACE}
+========================================
+"""
         }
     }
 }

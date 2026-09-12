@@ -142,5 +142,4 @@ Workspace: ${TERRAFORM_WORKSPACE}
 """
         }
     }
-}
 

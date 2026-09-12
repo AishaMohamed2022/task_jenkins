@@ -1,0 +1,8 @@
+vpc_cidr="172.17.0.0/16"
+pub1_cidr="172.17.1.0/24"
+pub2_cidr="172.17.3.0/24"
+private1_cidr="172.17.2.0/24"
+private2_cidr="172.17.4.0/24"
+availability_zone1 = "us-east-1a"
+availability_zone2 = "us-east-1b"
+env = "stg"

@@ -78,7 +78,7 @@ pipeline {
                 body: """Hello,
              The pipeline has successfully executed for the environment: ${params.ENVIRONMENT}
              You can check the build details here: ${env.BUILD_URL}""",
-                to: "nourhanelshiekh71@gmail.com"
+                to: "aisha.safwat.2002@gmail.com"
             )
         }
         // Triggered automatically if any stage fails, providing a direct link to the logs
@@ -89,7 +89,7 @@ pipeline {
                 body: """The pipeline failed for the environment: ${params.ENVIRONMENT}
              To view the logs and troubleshoot the issue, please visit the following link:
              ${env.BUILD_URL}console""",
-                to: "nourhanelshiekh71@gmail.com"
+                to: "aisha.safwat.2002@gmail.com"
             )
         }
     }

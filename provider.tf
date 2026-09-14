@@ -7,9 +7,7 @@ provider "aws" {
   skip_requesting_account_id  = true
   skip_metadata_api_check     = true
 
-  endpoints {
-    ec2 = "http://localhost:4566"
-  }
+  
 }
 
 
